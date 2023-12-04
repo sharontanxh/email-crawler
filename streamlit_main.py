@@ -9,7 +9,12 @@ import asyncio
 
 def main():
     st.set_page_config(page_title="Email Crawler Demo", page_icon=":envelope:", layout="wide")
-    st.header("Welcome to the Email Crawler.")
+    col_a, col_b = st.columns([1, 13])
+    with col_a:
+        st.image('./Assets/logo-no-bg.png', width=75)
+    with col_b:
+        st.header("Swiftly: Spend time on people and passions - not email")
+
     col1, col2 = st.columns([3.5, 1.5], gap="large")
     
     st.session_state.authenticated = True # TODO: Modify to track authentication status
@@ -48,14 +53,14 @@ def main():
         st.subheader("Digest")
         st.write("Read or create a summary from your favourite newsletters and organizations.")
         
-        # df2 = get_digest_list()
-        # table2 = st.data_editor(df2)
-        # selected_indices = table2[table2['See more'] == True].index.tolist()
-        # if selected_indices:
-        #     st.session_state.selected_row2 = df2.iloc[selected_indices[0]]
-        #     st.session_state.show_more2 = True
-        # else:
-        #     st.session_state.show_more2 = False  
+        df2 = get_digest_list()['next_step', '']
+        table2 = st.data_editor(df2)
+        selected_indices = table2[table2['See more'] == True].index.tolist()
+        if selected_indices:
+            st.session_state.selected_row2 = df2.iloc[selected_indices[0]]
+            st.session_state.show_more2 = True
+        else:
+            st.session_state.show_more2 = False  
     
     with col2:
         if st.session_state.show_more:
@@ -64,23 +69,25 @@ def main():
                 st.write("**Description**")
                 st.write(st.session_state.selected_row['summary'])
             
-            if st.session_state.selected_row['action']:
+            if st.session_state.selected_row['action'] and st.session_state.selected_row['action']!="None":
                 st.write("**Suggested action**")
                 st.write(st.session_state.selected_row['action'])
             
-            if st.session_state.selected_row['deadline']:
+            if st.session_state.selected_row['deadline'] and st.session_state.selected_row['deadline']!="None":
                 st.write("**Deadline**")
                 st.write(st.session_state.selected_row['deadline'])
 
-            if st.session_state.selected_row['constraint']:
+            if st.session_state.selected_row['constraint'] and st.session_state.selected_row['constraint']!="None":
                 st.write("**Take note**")
                 constraint_list = eval(st.session_state.selected_row['constraint'])
                 for constraint in constraint_list:
                     st.write(f" - {constraint}")
             
-            if st.session_state.selected_row['email_link']:
-                st.button(":arrow_upper_right: View in Gmail")
+            # if st.session_state.selected_row['email_link']:
+            st.button(":arrow_upper_right: View in Gmail")
 
+            if st.session_state.selected_row['action']:
+                st.button(":calendar: Add to calendar")
         # if st.session_state.show_more1:
         #     st.write(st.session_state.selected_row1)
 
@@ -114,11 +121,26 @@ def get_digest_list() -> pd.DataFrame:
     # "constraint": ["The events are in-person, so physical presence in San Francisco is required.", "Some events may require prior registration or application.", "The exact location and time of each event should be checked on the provided website."],
     # })
     df = get_and_enhance_input()
-    df = df[df['is_todo']=='Y']
+    df = df[df['next_step']=='digest']
     return df
 
-def get_and_enhance_input(file_name="/Users/tanxinhuisharon/Documents/PythonProjects/email-crawler/email-crawler/data.csv") -> pd.DataFrame:
+def get_and_enhance_input(file_name="/Users/tanxinhuisharon/Downloads/output.csv") -> pd.DataFrame:
     df = pd.read_csv(file_name)
+    for index, row in df.iterrows():
+        gpt_output_dict = eval(row["chatgpt_output"])
+        # {'next_step': 'digest', 'action': 'None', 'summary': 'Justin Birmingham is unable to attend the Ginger Root concert at Warsaw in Greenpoint due to having covid. He is offering his tickets to anyone interested, which he can transfer via the Live Nation app.', 'effort': 'None', 'deadline': 'None', 'constraint': []}
+        if 'next_step' in gpt_output_dict:
+            df['next_step'] = gpt_output_dict['next_step']
+        if 'action' in gpt_output_dict:
+            df['action'] = gpt_output_dict['action']
+        if 'summary' in gpt_output_dict:
+            df['summary'] = gpt_output_dict['summary']
+        if 'effort' in gpt_output_dict:
+            df['effort'] = gpt_output_dict['effort']
+        if 'deadline' in gpt_output_dict:
+            df['deadline'] = gpt_output_dict['deadline']
+        if 'constraint' in gpt_output_dict:
+            df['constraint'] = gpt_output_dict['constraint']
     df['See more'] = False
     return df
 
