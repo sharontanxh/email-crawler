@@ -56,30 +56,38 @@ class GmailScraper:
 
                 encoded_message_body = ""
 
-                if hasattr(message['payload']['body'], 'data'):
+                if 'data' in message['payload']['body']:
                     print("the payload body had a data")
-                    try:
-                        encoded_message_body = message['payload']['body']['data']
-                    except AttributeError:
-                        print("there was no data in payload body")
+                    encoded_message_body = message['payload']['body']['data']
+
                 else:
                     print("the payload body didn't have a data")
-                    print(message[])
-                    if hasattr(message['payload'], 'parts'):
-                        print("the payload had parts")
-                        first_part = message['payload']['parts'][0]
-                        encoded_message_body = first_part['body']['data']
-                    else:
-                        print("the payload didn't have parts")
 
-                # Decode the base64-encoded string
-                decoded_bytes = base64.b64decode(encoded_message_body)
-                # Convert the bytes to a string
-                decoded_string = decoded_bytes.decode('utf-8')
+                if 'parts' in message['payload']:
+                    print("the payload had parts")
+                    first_part = message['payload']['parts'][0]
+                    encoded_message_body = first_part['body']['data']
+                else:
+                    print("the payload didn't have parts")
+    
+                print(message['payload'])
+                
+                try:
+                    # Decode the base64-encoded string
+                    decoded_bytes = base64.b64decode(encoded_message_body)
+                    # Convert the bytes to a string
+                    decoded_string = decoded_bytes.decode('utf-8')
+                except Exception as e:
+                    print("could not decode")
+                    print(e)
+                    print("encoded string")
+                    print(encoded_message_body)
+                    print("full payload")
+                    print(message['payload'])
 
                 thread_info = {
                     'thread_id': thread_id,
-                    'message_body': decoded_string,
+                    'message_body': encoded_message_body,
                     'subject': subject,
                     'from': from_email,
                     'timestamp_of_last_message': timestamp,
@@ -114,4 +122,3 @@ with open(csv_file_name, mode='w', newline='') as csv_file:
     for item in recent_threads:
         writer.writerow(item)
 
-print(recent_threads)
