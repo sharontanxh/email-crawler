@@ -1,4 +1,5 @@
-# Swiftly: The next-generation email crawler
+# Swiftly: The next-generation email crawler 
+<img src="https://github.com/sharontanxh/email-crawler/assets/81359638/6df730c4-a9e7-4c3c-8bb5-86596099897c" width="60" height="60">
 
 ### Introduction
 
