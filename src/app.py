@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
+import modules.models as models
+import modules.todos as todos
 
 app = Flask(__name__)
-
 
 @app.route('/healthcheck')
 def healthcheck():
@@ -37,6 +38,18 @@ def test_form_post():
     msg = "{}".format(processed_text)
     return msg
 
+# We may not need this - can just use the streamlit app to make requests to our Flask API
+@app.route('/home')
+def home():
+    redirect("http://localhost:8501")
+
+@app.route('/todos', methods=['GET'])
+def get_todos():
+    """
+    Return json object which will be read by streamlit frontend as a pandas dataframe and displayed
+    """
+    todos.get_to_do_list()
+    return "Success", 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000, threaded=True)

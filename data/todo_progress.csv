@@ -1,0 +1,2 @@
+thread_id,status,subject,from,timestamp_of_last_message,email_link,email_message,chatgpt_output
+18c2c76ceeea665d,done,"Your AutoPay payment is scheduled for December 6, 2023",capitalone@notification.capitalone.com,2023-12-02 21:37:12+00:00,https://mail.google.com/mail/u/0/#inbox/18c2c76ceeea665d,"I am a test message, GPT please return a random response","{'next_step': 'digest', 'action': 'None', 'deadline': 'None', 'summary': 'The email is a test message asking for a random response.', 'effort': 'low', 'constraint': 'None'}"
