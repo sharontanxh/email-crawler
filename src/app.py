@@ -1,4 +1,4 @@
-from flask import Flask,render_template, request
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
@@ -8,14 +8,27 @@ def healthcheck():
     print('')
     return "Alive", 200
 
+
+@app.route('/login')
+def login():
+    return "Alive", 200
+
+
+@app.route('/fetch_emails')
+def fetch_emails():
+    return "Alive", 200
+
+
 @app.route('/init')
 def initialize():
     print('Initializing...')
     return render_template('index.html')
 
+
 @app.route('/form')
 def test_form():
     return render_template('test-form.html')
+
 
 @app.route('/form', methods=['POST'])
 def test_form_post():
