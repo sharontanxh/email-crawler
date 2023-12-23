@@ -124,7 +124,7 @@ def get_digest_list() -> pd.DataFrame:
     df = df[df['next_step']=='digest']
     return df
 
-def get_and_enhance_input(file_name="/Users/tanxinhuisharon/Downloads/output.csv") -> pd.DataFrame:
+def get_and_enhance_input(file_name="data/output.csv") -> pd.DataFrame:
     df = pd.read_csv(file_name)
     for index, row in df.iterrows():
         gpt_output_dict = eval(row["chatgpt_output"])
