@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<html>
+		<head>
+
+			<title>PyFarm</title>
+
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<link rel="shortcut icon" type="image/x-icon" href="{{url_for('static', filename='favicon.ico')}}" />
+
+			<style>
+			@media (max-width: 2560px) {
+				  html {
+				background: linear-gradient(
+				                     rgba(20,20,20, .0),
+				                     rgba(20,20,20, .0)),
+				                     url({{url_for('static', filename='crop-e-plant.png')}});
+				 -webkit-background-size: cover;
+				 -moz-background-size: cover;
+				 -o-background-size: cover;
+				 background-size: cover;
+				}
+				.playbutton {
+					background-color: white;
+					float: left;
+					cursor: pointer;
+					border-radius: 7px;
+					font-family:Avenir;
+					font-size:100%;
+					border: 1px solid #027414;
+					color: black;
+					width:100%;
+					height:50px;
+					opacity: 0.7;
+					transition: 0.3s;
+				}
+				.playbutton:hover {background-color: #76D372; color: white; opacity: 0.8;}
+				.playbutton:active {background-color: #027414; opacity: 1; border: 1px solid white;}
+
+				#nav_bar {
+					position:absolute;
+					top:2%;
+					left:2%;
+					text-align: center;
+					vertical-align: middle;
+					z-index:1000;
+					}
+					.proj-button {
+						background-color: white;
+						cursor: pointer;
+						border-radius: 8px;
+						font: 14px Avenir;
+						border: 1px solid #ffffff;
+						color: black;
+						padding: 10px;
+						opacity: 0.6;
+						width: 150px;
+						transition: 0.3s;
+						position: relative;
+						margin: 5px;
+						display: inline-block;
+					}
+					.proj-button:hover {background-color: #8B8FA0;}
+					.proj-button:focus { outline: none;}
+					button:focus { outline: none; }
+			}
+			@media (max-width: 1440px) {
+				html {
+			background: linear-gradient(
+													 rgba(20,20,20, .3),
+													 rgba(20,20,20, .3)),
+													 url({{url_for('static', filename='crop-e-plant.png')}});
+			 -webkit-background-size: cover;
+			 -moz-background-size: cover;
+			 -o-background-size: cover;
+			 background-size: cover;
+			}
+
+			#nav_bar {
+				position:absolute;
+				top:5%;
+				left:2%;
+				text-align: center;
+				vertical-align: middle;
+				z-index:1000;
+				}
+			.playbutton {
+				background-color: white;
+				float: left;
+				cursor: pointer;
+				border-radius: 7px;
+				font-family:Avenir;
+				font-size:100%;
+				border: 1px solid #027414;
+				color: black;
+				width:100%;
+				height:50px;
+				opacity: 0.7;
+				transition: 0.3s;
+				margin:5px;
+			}
+			.playbutton:hover {background-color: #76D372; color: white; opacity: 0.8;}
+			.playbutton:active {background-color: #027414; opacity: 0.8; border: 1px solid white;}
+			button:focus { outline: none; }
+		}
+			</style>
+
+		</head>
+
+		<body>
+
+			<div id="nav_bar">
+				<button class="playbutton" id="init_button">INIT</button>
+				<button class="playbutton" id="light_button">LIGHT</button>
+				<button class="playbutton" id="fan_button">FAN</button>
+				<button class="playbutton" id="mist_button">MIST</button>
+				<button class="playbutton" id="kill_button">KILL ALL</button>
+				<button class="playbutton" id="shutdown_button">SHUTDOWN</button>
+			</div>
+
+		</body>
+
+        <script>
+        	const init_button = document.getElementById('init_button');
+        	const light_button = document.getElementById('light_button');
+			const fan_button = document.getElementById('fan_button');
+			const mist_button = document.getElementById('mist_button');
+        	const kill_button = document.getElementById('kill_button');
+        	const shutdown_button = document.getElementById('shutdown_button');
+
+        	init_button.addEventListener('click', (e) => {
+        		window.location = "/init";
+	        });
+			light_button.addEventListener('click', (e) => {
+        		window.location = "/light";
+	        });
+			fan_button.addEventListener('click', (e) => {
+        		window.location = "/fan";
+	        });
+        	mist_button.addEventListener('click', (e) => {
+        		window.location = "/mist";
+	        });
+			kill_button.addEventListener('click', (e) => {
+        		window.location = "/kill";
+	        });
+			shutdown_button.addEventListener('click', (e) => {
+        		window.location = "/shutdown";
+	        });
+        </script>
+</html>
