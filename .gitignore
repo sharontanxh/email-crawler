@@ -1,4 +1,6 @@
 *.env
 credentials.json
 token.json
+email-crawler-venv/*
 *__pycache__*
+emails.csv

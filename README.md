@@ -25,4 +25,10 @@ The app runs on port 5000, you can check
 `http://127.0.0.1:5000/init`
 
 quick command to kill any process running on port 5000
-`kill -9 $(lsof -i:8080 -t) 2> /dev/null`
+`kill -9 $(lsof -i:5000 -t) 2> /dev/null`
+
+Setup POSTGRESQL Database Server locally 
+run `bin/init_db.sh`
+
+Connect to local server using this guide: https://www.commandprompt.com/education/how-to-connect-to-postgresql-from-visual-studio-code/
+
