@@ -7,6 +7,10 @@ from src.config import CONFIG
 from src.helpers.gmail_client import GmailScraper
 
 
+from src.config import CONFIG
+from src.helpers.gmail_client import GmailScraper
+
+
 app = Flask(__name__)
 
 
