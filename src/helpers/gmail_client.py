@@ -8,6 +8,7 @@ from dateutil import parser
 import base64
 import quopri
 import csv
+import email
 
 from src.helpers.postgres_client import SwiftlyDB
 
@@ -80,13 +81,17 @@ class GmailScraper:
     def scrape_recent_threads(self):
         results = []
         timestamp_processed = datetime.utcnow()
+        
         try:
-            threads = self.service.users().threads().list(userId='me', maxResults=50, q="-category:promotions").execute().get('threads', [])
+            threads = self.service.users().threads().list(userId='me', maxResults=2, q="-category:promotions").execute().get('threads', [])
 
             for thread in threads:
                 thread_id = thread['id']
                 email_link = f"https://mail.google.com/mail/u/0/#inbox/{thread_id}"
                 thread_data = self.service.users().threads().get(userId='me', id=thread_id).execute()
+                
+                if not thread_data.get('messages'):
+                    continue
 
                 message = thread_data['messages'][0]  # Get the first message in the thread
                 encoding_type = None
@@ -98,7 +103,7 @@ class GmailScraper:
                     if header['name'] == 'To':
                         to_email = header['value']
 
-                    if header['name'] == 'From':
+                    if header['name'] == 'From' and '<' in header['value']:
                         from_split = header['value'].split("<")[1]
                         from_email = from_split[0:-1]
 
@@ -125,9 +130,11 @@ class GmailScraper:
                 # Decode MIME content based on Content-Transfer-Encoding header value
                 decoded_message = ""
                 try:
-                    decoded_message = base64.urlsafe_b64decode(encoded_message_body.encode('UTF8'))
+                    decoded_bytes = base64.urlsafe_b64decode(encoded_message_body)
+                    message = email.message_from_bytes(decoded_bytes)
+                    decoded_message = message.as_string().strip()
                 except Exception as e:
-                    print(f"could not decode: {str(e)} of {encoding_type}")
+                    print(f"Could not decode: {str(e)} with encoding type {encoding_type}")
 
                 thread_info = {
                     'thread_id': thread_id,
@@ -142,6 +149,8 @@ class GmailScraper:
                 results.append(thread_info)
         except Exception as e:
             print(f"Error scraping recent threads: {str(e)}")
+            print(f"Returning results scraped so far: {len(results)}")
+            return results
         return results
 
     def write_csv_file(self, file_name):
@@ -170,23 +179,28 @@ class GmailScraper:
         This scrapes recent threads and writes them to Postgres Db
         '''
         recent_threads = self.scrape_recent_threads()
+        print(f"Scraped {len(recent_threads)} threads from Gmail")
+        
         db = SwiftlyDB()
-        db.create_tables()
 
+        threads_data = []
         for item in recent_threads:
-            db.add_thread(
-                thread_id=item['thread_id'],
-                message_body=item['message_body'],
-                subject=item['subject'],
-                from_email=item['from'],
-                user_email=item['user'],
-                timestamp_of_last_message=item['timestamp_of_last_message'],
-                email_link=item['email_link'],
-                processed_status=True,
-                last_updated=item['updated_utc'],
-                user_status=None,
-                to_do=None
-            )
-        threads = db.get_all_threads()
-        print(threads)
-        print(len(threads))
+            thread_data = {
+                'thread_id': item['thread_id'],
+                'message_body': item['message_body'],
+                'subject': item['subject'],
+                'from_email': item['from'],
+                'user_email': item['user'],
+                'timestamp_of_last_message': item['timestamp_of_last_message'],
+                'email_link': item['email_link'],
+                'processed_status': False,
+                'last_updated': item['updated_utc'],
+                'user_status': None
+            }
+            threads_data.append(thread_data)
+
+        try:
+            db.add_threads(threads_data)
+            print(f"Added {len(recent_threads)} threads to DB")
+        except Exception as e:
+            print(f"An error occurred while writing to the database: {e}")

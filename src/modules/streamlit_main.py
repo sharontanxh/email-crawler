@@ -2,7 +2,41 @@ import streamlit as st
 import pandas as pd
 import requests
 
-# Globals
+def process_emails_and_todos():
+    # Call the /fetch_emails_db endpoint
+    fetch_response = requests.get('http://127.0.0.1:5000/fetch_emails_db')
+    if fetch_response.status_code == 200:
+        # Call the /todos endpoint
+        todos_response = requests.get('http://127.0.0.1:5000/todos')
+        if todos_response.status_code == 200:
+            todos_data = todos_response.json()  # Parse the JSON response
+            return todos_data
+        else:
+            return "Failed to process todos."
+    else:
+        return "Failed to fetch emails."
+
+def display_json_as_table(json_data):
+
+    df = pd.DataFrame(json_data)    
+    df.rename(columns={
+        'subject': 'Subject',
+        'from_email': 'From',
+        'timestamp_of_last_message': 'Timestamp',
+        'email_link': 'Link',
+        'next_step': 'Next step',
+        'action': 'Action',
+        'deadline': 'Deadline',
+        'effort': 'Effort',
+        'todo_constraint': 'Constraint'
+    }, inplace=True)
+    df_for_display = df[[
+        'Subject', 'From', 'Timestamp', 
+        'Link', 'Next step', 'Action', 
+        'Deadline', 'Effort', 'Constraint'
+    ]]
+    
+    st.table(df_for_display)
 
 def main():
     st.set_page_config(page_title="Email Crawler Demo", page_icon=":envelope:", layout="wide")
@@ -18,9 +52,11 @@ def main():
     with col_b:
         st.header("Swiftly: Spend time on people and passions - not email")
 
-    response = requests.get('http://127.0.0.1:5000/healthcheck')
-    if response.status_code == 200:
-        st.write(response.text)
+    if st.button('Process Emails and Todos'):
+        with st.spinner('Processing...'):
+            result = process_emails_and_todos()
+        st.success("Done!")
+        display_json_as_table(result)
 
     col1, col2 = st.columns([3.5, 1.5], gap="large")
     
@@ -30,11 +66,10 @@ def main():
         # if st.button("Call GPT-4"):
         #     asyncio.run(call_gpt_with_query(table))
 
-        df = get_to_do_list()
+        df = get_and_enhance_input()
         df_for_display = df[['summary', 'effort', 'See more']]
         table = st.data_editor(df_for_display)
         selected_indices = table[table['See more'] == True].index.tolist()
-        print(st.session_state)
         if selected_indices:
             st.session_state.selected_row = df.iloc[selected_indices[0]]  # Always take the first selected row
             st.session_state.show_more = True
@@ -66,12 +101,6 @@ def main():
 
             if st.session_state.selected_row['action']:
                 st.button(":calendar: Add to calendar")
-
-def get_to_do_list() -> pd.DataFrame:
-    # Make a dataframe with columns Done, Task, From, Effort, Urgency, Source
-    df = get_and_enhance_input()
-
-    return df
 
 def get_and_enhance_input(file_name="data/output.csv") -> pd.DataFrame:
     df = pd.read_csv(file_name)

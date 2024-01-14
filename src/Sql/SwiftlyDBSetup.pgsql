@@ -13,9 +13,10 @@ CREATE TABLE Threads (
     processed_status BOOLEAN,
     last_updated TIMESTAMP,
     user_status VARCHAR(100),
-    to_do TEXT
+    next_step VARCHAR(100),
+    action TEXT,
+    deadline TIMESTAMP,
+    summary TEXT,
+    effort VARCHAR(100),
+    todo_constraint TEXT
 );
-
-SELECT * FROM Threads;
-
-

@@ -1,40 +1,82 @@
 from .utils import openai_functions
 from .models import ToDoResponse
 from pydantic import parse_obj_as
-import pandas as pd
+from src.helpers.postgres_client import SwiftlyDB
+from dateutil import parser
 
 """
-This module contains functions for processing emails and writing them to file.
+This module contains functions for processing emails and writing them to DB.
 """
 
-# Extend this to
-# Take in a csv of emails including their statuses
-# If not yet processed, process them
-# Write the output back into the csv
-# So that Streamlit frontend ONLY reads from the csv (or DB later on)
+def get_to_do_list():
+    swiftly_db = SwiftlyDB()
+    threads = swiftly_db.get_unprocessed_threads()
+    for thread in threads:
+        if thread.message_body:
+            gpt_output = _get_gpt_response(thread.message_body)
+            processed_output = _process_gpt_output(gpt_output)
+            if 'next_step' in gpt_output:
+                swiftly_db.update_thread(thread.row_id, processed_output)
+    processed_threads = swiftly_db.get_processed_threads()
+    return processed_threads
 
-def get_to_do_list() -> dict:
-    todo_progress_source = "data/todo_progress.csv"
-    todo_progress_df = pd.read_csv(todo_progress_source)
-    todo_progress_df = todo_progress_df[todo_progress_df['status'] != 'done']
+def thread_to_dict(thread):
+    return {
+        'row_id': thread.row_id,
+        'thread_id': thread.thread_id,
+        'message_body': thread.message_body,
+        'subject': thread.subject,
+        'from_email': thread.from_email,
+        'user_email': thread.user_email,
+        'timestamp_of_last_message': thread.timestamp_of_last_message,
+        'email_link': thread.email_link,
+        'last_updated': thread.last_updated,
+        'processed_status': thread.processed_status,
+        'user_status': thread.user_status,
+        'next_step': thread.next_step,
+        'action': thread.action,
+        'deadline': thread.deadline,
+        'summary': thread.summary,
+        'effort': thread.effort,
+        'todo_constraint': thread.todo_constraint
+    }
 
-    for index, row in todo_progress_df.iterrows():
-        gpt_output = get_gpt_response(row['email_message'])
-        print(gpt_output)
-        todo_progress_df.loc[index, 'chatgpt_output'] = str(gpt_output)
-        if 'next_step' in gpt_output:
-            todo_progress_df.loc[index, 'status'] = 'done'
-        else:
-            todo_progress_df.loc[index, 'status'] = 'error'
+def _process_gpt_output(gpt_output: dict) -> dict:
+    valid_next_steps = ['todo', 'review', 'digest']
+    if gpt_output.get('next_step') not in valid_next_steps:
+        gpt_output['next_step'] = 'review'
+
+    valid_efforts = ['low', 'medium', 'high']
+    if gpt_output.get('effort') not in valid_efforts:
+        gpt_output['effort'] = 'medium'
+
+    if not gpt_output.get('action') or gpt_output.get('action') == 'None':
+        gpt_output['action'] = None
     
-    todo_progress_df.to_csv(todo_progress_source, index=False)
+    if not gpt_output.get('constraint') or gpt_output.get('constraint') == 'None':
+        gpt_output['constraint'] = None
 
-def get_gpt_response(email_string) -> dict:
+    if gpt_output.get('next_step') in ['todo', 'review'] and gpt_output.get('deadline'):
+        try:
+            gpt_output['deadline'] = parser.parse(gpt_output['deadline'])
+        except:
+            gpt_output['deadline'] = None
+    else:
+        gpt_output['deadline'] = None
+
+    if not gpt_output.get('summary'):
+        gpt_output['summary'] = None
+
+    return gpt_output
+
+def _get_gpt_response(email_string) -> dict:
     """
-    Gets GPT response for a given email string
+    Gets GPT response for a given email string, with a conservative string length
     """
     system_prompt = _create_system_prompt()
     user_prompt = "Email:\n" + email_string
+    if len(user_prompt) > 20000:
+        user_prompt = user_prompt[:20000]
     response = openai_functions.call_gpt(system_prompt, user_prompt)
     return _check_response(response)
 
@@ -65,4 +107,4 @@ def _check_response(response) -> str:
         response = parse_obj_as(ToDoResponse, response)
         return response.dict()
     except Exception as e:
-        return {"Error": str(e)}
+        return {"Error": f"{str(e)} from {response}"}
